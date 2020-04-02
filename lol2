@@ -1,0 +1,183 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+import os, sys
+from Tkinter import *
+from ttk import *
+import matplotlib
+matplotlib.use('TkAgg')
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
+import Tkinter as tk
+import networkx as nx
+import numpy as np
+import ScrolledText
+from Tkinter import INSERT
+from Tkinter import END
+from string import maketrans
+import unicodedata
+
+
+
+
+win = tk.Tk()
+#win.title("COVID - 19 Ulitmate Graph Tool")
+#win.iconbitmap('1.ico')
+win.geometry('900x400')
+win.resizable(0,0)
+a=0
+b=0
+G = nx.Graph()
+
+# Modify adding a Label
+aLabel = Label(win, text="Liczba wierzchołków:").grid(column=0, row=0)
+aLabel = Label(win, text="Wierzchołek: ").grid(column=0, row=1)
+aLabel = Label(win, text="  połącz z wierzchołkiem: ").grid(column=2, row=1)
+aLabel = Label(win, text="  Logi: ").grid(column=0, row=2)
+aLabel = Label(win, text="  Macierz sąsiedztwa: ").grid(column=1, row=2)
+aLabel = Label(win, text="  Macierz incydencji: ").grid(column=2, row=2)
+aLabel = Label(win, text="  Lista sąsiedztwa: ").grid(column=3, row=2)
+aLabel = Label(win, text="  Liczba kolumn lub wierszy: ").grid(column=1, row=5)
+
+# Button Click Event Function
+# Generating combobox data
+def clickMe():
+    action.configure(text='Dodano ' + lwierzcholkowEntered.get() + ' wierzchołków' ) #zmiana tekstu na przycisku
+    Log.insert(INSERT, 'Wierzchołki: ' + lwierzcholkowEntered.get() + '\n') #wsad tekstu w scrolledtekst
+    lwierzcholkow1 = int(lwierzcholkowEntered.get())    #pobieranie danych z Entry przypisanie inta
+    lwierzcholkow1 = int(lwierzcholkow1)
+    getlwierzkolkow = [ i for i in range (0, lwierzcholkow1)] #generacja listy wierzchołków
+    numberChosenwierzch1['values'] = getlwierzkolkow #wpisanie listy w comboboxa
+    numberChosenwierzch1.current(0) #ustawienie obecnie wybranej wartości na brak
+    numberChosenwierzch2['values'] = getlwierzkolkow #wpisanie listy w comboboxa
+    numberChosenwierzch2.current(0) #ustawienie obecnie wybranej wartości na brak
+def reloadbutton():
+    braction.configure(text=' Połącz wierzchołki ') #zmiana nazwy po funkcji timera
+
+def closeApp():
+    win.destroy() #niszczenie okna
+
+def connectMe():
+    braction.configure(text= numberChosenwierzch1.get() + ' połączono z ' + numberChosenwierzch2.get()) #wsad informacji o kolejnym połaczeniu między wierzchołkami
+    numberChosenwierzch1_1 = int(numberChosenwierzch1.get()) #przypisanie inta z comboboxa
+    numberChosenwierzch1_1 = int(numberChosenwierzch1_1)
+    numberChosenwierzch2_2 = int(numberChosenwierzch2.get())  #przypisanie inta z comboboxa
+    numberChosenwierzch2_2 = int(numberChosenwierzch2_2 )
+    G.add_edge(numberChosenwierzch1_1,numberChosenwierzch2_2) #dodanie połączenia do klasy Grafu
+    win.after(2000, reloadbutton) #funkcja opóźnienia napisu na przycisku
+    Log.insert(INSERT, 'Połączenie: ' + numberChosenwierzch1.get() + ' z ' + numberChosenwierzch2.get() + '\n')  #dodaje do logów info o połączeniu między wierzchołkami
+    return G.add_edge(numberChosenwierzch1_1,numberChosenwierzch2_2) #zwraca połączenie do kalsy Grafu
+
+# poniższe nie działa:
+def connectimplement():
+    numberChosenwierzch1_1 = int(numberChosenwierzch1)
+    numberChosenwierzch2_2 = int(numberChosenwierzch2)
+
+# Generowanie grafu na podstawie połączeń
+def openLog():
+    lwierzcholkow1 = int(lwierzcholkowEntered.get()) #odczyt i przypisanie do inta liczby wprowadzonych wierzchołków
+    lwierzcholkow1 = int(lwierzcholkow1)
+
+    getlwierzkolkow = [i for i in range(0, lwierzcholkow1)] # generacja listy
+    nodes = getlwierzkolkow #przypisanie listy do nowej zmiennej
+    top = Toplevel() # utworzenie nowego okna
+    top.title("My Second Win") #tytuł okienka
+    #top.iconbitmap('1.ico') #ikona okienka
+    f = plt.figure(figsize=(5, 4)) #funkcja ograniczająca pole figury
+    plt.axis('off') #funkcja która wprowadza wykres bezosiowy
+    G.add_nodes_from(nodes) # dodanie wierzchołków do klasy Graph
+
+    print type(G) #sprawdzenie typu zmiennej
+    A = nx.to_numpy_matrix(G) #wygenerowaie z kalsy Graph macierzy sąsiedztwa i przypisanie do zmiennej
+    np.savetxt("am.txt", A, delimiter=' ', fmt='%d') #zapisanie macierzy do pliku tekstowego
+
+    C = nx.incidence_matrix(G) #wygenerowanie macierzy incydencji
+    L = C.toarray() #zapisanie jako tablicy
+    Neigh.delete(1.0, END) #usunięcie obecnych danych z scrolltexta
+    for line in nx.generate_adjlist(G): #wygenerowanie listy
+        Neigh.insert(INSERT, line + '\n') #oddzielenie nowymi wierszami
+    Inci.delete(1.0, END) #usunięcie obecnych danych z scrolltexta
+    Inci.insert(INSERT, L) #wstawienie danych macierzy incydencji
+    Adj.delete(1.0, END) #usunięcie obecnych danych z scrolltexta
+    Adj.insert(INSERT, A) #wstawienie danych macierzy sąsiedztwa
+    print type(Adj) #sprawdzenie typu zmiennej
+    print type(A) #sprawdzenie typu zmiennej
+    pos = nx.circular_layout(G) #pozycjonowanie wierzchołków jako okręgów
+    nx.draw_networkx(G, pos=pos) #wyrysowanie grafu
+    canvas = FigureCanvasTkAgg(f, master=top) # A tk.DrawingArea
+    canvas.get_tk_widget().pack(side='bottom', fill='both', expand=1)  # ERROR Tk.
+
+
+# Generowanie grafu z macierzy incydencji
+def openAdj():
+    
+    X = np.loadtxt("am.txt") #odczyt pliku tekstowego
+
+    Y = np.array(X)#zmiana na format tablicy
+
+    K = nx.from_numpy_matrix(Y)  # przypisanie z macierzy danych do funkcji rysującej grafy
+    top = Toplevel()  # utworzenie nowego okna
+    top.title("My Second Win")  # tytuł nowego okna
+    top.iconbitmap('1.ico')  # ikona nowego okna
+    f = plt.figure(figsize=(5, 4))  # funkcja ograniczająca pole figury
+    plt.axis('off')  # funkcja która wprowadza wykres bezosiowy
+
+    pos = nx.circular_layout(K)  # pozycjonowanie wierzchołków jako okręgów
+    nx.draw_networkx(K, pos=pos)  # wyrysowanie grafu
+    canvas = FigureCanvasTkAgg(f, master=top)  # A tk.DrawingArea
+    canvas.get_tk_widget().pack(side='bottom', fill='both', expand=1)  # ERROR Tk.
+
+# nieużywane definicje
+def openInci():
+    b=a
+# nieużywane definicje
+def openNeigh():
+    a=b
+
+# Adding a texbox Entry widgety
+# lwierzcholkow = tk.StringVar()
+lwierzcholkowEntered = Entry(win, width=5)  # Entry dla wierzchołków
+lwierzcholkowEntered.grid(column=1, row=0)
+KolbWierszEntered = Entry(win, width =7)  # Entry dla liczby kolumn/wierszy macierzy(nieużywane)
+KolbWierszEntered.grid(column=1, row=6)
+
+# Adding A Buttons
+action = Button(win, text="Dodaj", command=clickMe)  # Przycisk odnoszący się do komendy clickMe
+action.grid(column=2, row=0)
+braction = Button(win, text="Połącz wierzchołki", command=connectMe)  # Przycisk odnoszący się do komendy connectMe
+braction.grid(column=4, row=1)
+btaction = Button(win, text="Graph Generate from form", command=openLog)  # Przycisk odnoszący się do komendy openLog
+btaction.grid(column=0, row=5)
+btaction = Button(win, text="Graph Generate from Adj", command=openAdj)  # Przycisk odnoszący się do komendy openAdj
+btaction.grid(column=1, row=7)
+btaction = Button(win, text="Graph Generate from Inci", command=openInci)  # Przycisk odnoszący się do komendy 
+# openInci(nieużywany)
+btaction.grid(column=2, row=5)
+btaction = Button(win, text="Graph Generate from List", command=openNeigh)  # Przycisk odnoszący się do komendy 
+# openNeigh(nieużywany)
+btaction.grid(column=3, row=5)
+actionex = Button(win, text="Egzit", command=closeApp)  # Przycisk zamykający okno główne aplikacji
+actionex.grid(column=2, columnspan=2)
+
+# btaction.pack()
+# getlwierzkolkow=0
+# Adding A Comboboxes
+
+numberChosenwierzch1 = Combobox(win, width=12, state='readonly')  # combobox połączenia wierzchołków
+numberChosenwierzch1.grid(column=1, row=1)
+numberChosenwierzch2 = Combobox(win, width=12, state='readonly')  # combobox połączenia wierzchołków
+numberChosenwierzch2.grid(column=3, row=1)
+
+# Scrolled Bary
+# wrap=tk.WORD, wrap=tk.WORD, state=tk.DISABLED
+scrolW = 20  # szerokość scrolledbara
+scrolH = 10  # Wysokość scrolledbara
+Log = ScrolledText.ScrolledText(win, width=scrolW, height=scrolH)  # scrollbar od logów
+Log.grid(column=0, row=4)
+Adj = ScrolledText.ScrolledText(win, width=scrolW, height=scrolH, wrap=tk.WORD)  # scrollbar od macierzy sąsiedztwa
+Adj.grid(column=1, row=4)
+Inci = ScrolledText.ScrolledText(win, width=scrolW, height=scrolH)  # scrollbar od macierzy incydencji
+Inci.grid(column=2, row=4)
+Neigh = ScrolledText.ScrolledText(win, width=scrolW, height=scrolH)  # scrollbar od listy sąsiedztwa
+Neigh.grid(column=3, row=4)
+
+win.mainloop()
