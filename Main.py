@@ -477,6 +477,7 @@ def changennn():
     numberChosenwierzch3_3 = int(numberChosenwierzch3_3)
     getingget = actionetykentry.get()
     labeldict[numberChosenwierzch3_3] = getingget
+    return labeldict
 
 def wrzerz():
     pobnumzirodla = entrywszerz.get()
